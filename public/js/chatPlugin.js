@@ -5,105 +5,103 @@ function CordovaBox(host, token, options){
     if(!token) return 'No token passed for authentication. Unable to authenticate.';
 
     this.options = options || {};
-    this.options._host = host;
-    this.options._token = token;
+    this.options.host = host;
+    this.options.token = token;
+    this.options.query += "&token=" + token;
+    var self = this;
 
-    var socket = io.connect(host, {query: options});
+    this.socket = io.connect(host, {query: options});
 
-    _Config = {
-
-        Chat:{
-            Event: {
-                message             : 'message',
-                addUser             : 'user.create',
-                removeUser          : 'user.destroy',
-                blockUser           : 'user.block'
-
-            },
-            UI: {
-                name                : '#room_name',
-                input               : '#chat_box',
-                message_log         : '#chat_log',
-                sendInputButton     : '#sendMessageButton',
-                userList            : '#roster'
-            }
-        },
-
-        Video:{
-            Event: {
-                publishing          : 'publishing',
-                status              : 'status',
-                name                : 'name'
-            },
-            UI: {
-                name                : '#video_name',
-                status              : '#status',
-                publishing          : '#publishing'
-            }
-        }
-    };
+    /**
+     * todo use ui referenes from front end for below maps
+     * @type {*|{chat: {event: {message: string, addUser: string, removeUser: string, blockUser: string}, ui: {name: string, input: string, message_log: string, sendInputButton: string, userList: string}}, video: {event: {publishing: string, status: string, name: string}, ui: {name: string, status: string, publishing: string}}}}
+     * @private
+     */
 
     /***
      * Request a user to be blocked
      * @param name
      * @param id
      */
-    function sendBlock(name, id) {
-        socket.emit(_Config.Chat.Event.blockUser, {name: name, id: id});
-    }
+    this.sendBlock = function(name, id) {
+        self.socket.emit('user.block', {name: name, id: id});
+    };
 
-    function sendMessage(msg) {
+    this.sendMessage = function(msg) {
         if(msg == '') return;
-        socket.emit(_config.chat.event.message, {
+        console.log(msg);
+        self.socket.emit('message', {
             name: name,
             value: msg,
             type: clientType,
             id: clientId
         });
-        $(_config.chat.ui.input).val('');
-    }
+        console.log(options.messageLog);
+        $(options.messageLog).val('');
+    };
 
-    var logChat = function  (message, type) {
+     this.logChat = function(message, type) {
+        console.log(message, type);
         var li = $('<li />').text(message);
         li.addClass('clientTypeFont_' + type);
-        $(_config.chat.ui.message_log).prepend(li);
-        console.log(message, type);
+        $(options.messageLog).prepend(li);
     };
 
     /**
-     *************** Socket Events *****************
+     *************** Start Socket Events *****************
      */
-    socket.on('connect', function (data) {
-        logChat('Connected to chat room ', 'system');
+
+    self.socket.on('message', function (data) {
+        console.log("data" + data);
+        self.logChat(data.name + ": " +  data.value, data.type);
+
     });
 
-    socket.on('disconnect', function (data) {
-        logChat(data.value, 'leave');
+    self.socket.on('connect', function (data) {
+
+        console.log('  --------------   ');
+        console.log(" |              |  ");
+        console.log(" |  CordovaBox  |  ");
+        console.log(" |     .io      |  ");
+        console.log(" |              |  ");
+        console.log("  --------------   ");
+
+        console.log(" --|= Web socket connect connection established.");
+
+        self.logChat('Connected to chat room ', 'system', data);
+
     });
 
-    socket.on('message', function (data) {
-        logChat(data.name + ": " +  data.value, data.type);
+    self.socket.on('disconnect', function (data) {
+        self.logChat(data.value, 'leave');
     });
 
-    socket.on('error', function (data) {
-        logChat(data.value, 'error');
+
+
+    self.socket.on('error', function (data) {
+        self.logChat(data, 'error');
     });
+
+    /**
+     *************** End Socket Events *****************
+     */
 
     jQuery(document).ready(function () {
-
-        $(_config.chat.ui.input).keypress(function (event) {
+        console.log("options.messageInput:" + options.messageInput);
+        $(options.messageInput).keypress(function (event) {
+            console.log("options.messageInput:" + options.messageInput);
             if (event.which == 13) {
-                var msg = $(_config.chat.ui.input).val();
-                sendMessage(msg);
+                console.log("options.messageInput:" + options.messageInput);
+                var msg = $(options.messageInput).val();
+                self.sendMessage(msg);
             }
         });
 
-        $(_config.chat.ui.sendInputButton).click(function () {
-            var msg = $(_config.chat.ui.input).val();
-            sendMessage(msg);
+        $(options.messageSendButton).click(function () {
+            self.logChat('messageSendButton');
+            var msg = $(options.messageSendButton).val();
+            self.sendMessage(msg);
         });
-
-        socket.emit('ready');
 
     });
 }

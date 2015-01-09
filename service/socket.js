@@ -68,9 +68,10 @@ module.exports = new function Sockets(){
 
             socket.on('ready', function(data){
 
-                log.silly(Room.name + " data syncing with client");
+                log.silly(Room.name + " history and roster data syncing with client");
 
                 Room.messages.forEach(function(element){
+                    log.silly("Message History: ("+Room.name+")", User.name, 'said', element.value);
                     socket.emit('message', DataTransmissionObject(element, {
                         value     : element.value
                     }));

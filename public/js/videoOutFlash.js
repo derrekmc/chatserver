@@ -11,7 +11,7 @@ var debug       = 0;
 var videoWidth  = 680;
 var videoHeight = 382;
 
-var so = new SWFObject("/flash/client.swf", "videoSWObject", videoWidth, videoHeight, "11");
+var so = new SWFObject("/flash/client.swf", "videoOut", videoWidth, videoHeight, "11");
 so.addParam("wmode",            "direct");
 so.addParam("scale",            "noscale");
 so.addVariable("stagewidth",    "426");
@@ -27,4 +27,4 @@ so.addVariable("username",      username);
 so.addVariable("userType",      security);
 so.addVariable("showType",      showType);
 so.addVariable("debug",         debug);
-so.write("video");
+so.write("videoOut");

@@ -11,13 +11,12 @@ module.exports = function isSocketAuthenticated(socket, next){
     var publicKey = _Config.Security.jwt.public.key;
     var secureKey = _Config.Security.jwt.secure.key;
     var token = Query.token;
-
+    var reason = null;
     // Some basic validation to make sure a token was passed
     if (Query && (token === undefined || token.length === 0 )) {
-
-        console.error('Token authorization failed');
-        callback("connection failed because it is missing a required parameter: token.");
-
+        var error = 'Socket Authentication Error. Reason: Token authorization failed. No token passed.';
+        log.error(error);
+        return next(new Error(error));
     } else {
 
         if (token === publicKey) {
@@ -34,8 +33,10 @@ module.exports = function isSocketAuthenticated(socket, next){
         }
 
         if (!_Config.sockets.prefered_connections_enabled && _Stats.active_connections < _Config.sockets.max_connections) {
-            callback("Max connections reached. Your connection to the server has been denied. The server has reached its perfered operating limits. Try spawning another node to correct this issue or turn on auth spawn to prevent this issuing from continuing further.");
             //todo spawn another node if autospawn is enabled.
+            var error = 'Max connections reached. Your connection to the server has been denied. The server has reached its perfered operating limits. Try spawning another node to correct this issue or turn on auth spawn to prevent this issuing from continuing further.';
+            log.error(error);
+            return next(new Error(error));
         }
 
         // allowing any token value, after this connection will be allowed to proceed.
@@ -66,12 +67,14 @@ module.exports = function isSocketAuthenticated(socket, next){
          nsp.emit('hi', 'everyone!');
          });*/
 
+        //if (socket.request.headers.cookie) {
+        //    return next();
+        //}
     }
 
     if (socket.request.headers.cookie) {
         return next();
     }
 
-    next(new Error('Socket Authentication error'));
 
 };
